@@ -1,126 +1,237 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:esense_flutter/esense.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() => runApp(const MyApp());
+
+class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  _MyAppState createState() => _MyAppState();
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class _MyAppState extends State<MyApp> {
+  String _deviceName = 'Unknown';
+  double _voltage = -1;
+  String _deviceStatus = '';
+  bool sampling = false;
+  String _event = '';
+  String _button = 'not pressed';
+  bool connected = false;
 
-  // This widget is the root of your application.
+  // the name of the eSense device to connect to -- change this to your own device.
+  // String eSenseName = 'eSense-0164';
+  static const String eSenseDeviceName = 'eSense-0390';
+  ESenseManager eSenseManager = ESenseManager(eSenseDeviceName);
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+  void initState() {
+    super.initState();
+    _listenToESense();
   }
-}
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  Future<void> _askForPermissions() async {
+    if (!(await Permission.bluetoothScan.request().isGranted &&
+        await Permission.bluetoothConnect.request().isGranted)) {
+      print(
+          'WARNING - no permission to use Bluetooth granted. Cannot access eSense device.');
+    }
+    // for some strange reason, Android requires permission to location for Bluetooth to work.....?
+    if (Platform.isAndroid) {
+      if (!(await Permission.locationWhenInUse.request().isGranted)) {
+        print(
+            'WARNING - no permission to access location granted. Cannot access eSense device.');
+      }
+    }
+  }
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+  Future<void> _listenToESense() async {
+    await _askForPermissions();
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+    // if you want to get the connection events when connecting,
+    // set up the listener BEFORE connecting...
+    eSenseManager.connectionEvents.listen((event) {
+      print('CONNECTION event: $event');
 
-  final String title;
+      // when we're connected to the eSense device, we can start listening to events from it
+      if (event.type == ConnectionType.connected) _listenToESenseEvents();
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+      setState(() {
+        connected = false;
+        switch (event.type) {
+          case ConnectionType.connected:
+            _deviceStatus = 'connected';
+            connected = true;
+            break;
+          case ConnectionType.unknown:
+            _deviceStatus = 'unknown';
+            break;
+          case ConnectionType.disconnected:
+            _deviceStatus = 'disconnected';
+            sampling = false;
+            break;
+          case ConnectionType.device_found:
+            _deviceStatus = 'device_found';
+            break;
+          case ConnectionType.device_not_found:
+            _deviceStatus = 'device_not_found';
+            break;
+        }
+      });
+    });
+  }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  Future<void> _connectToESense() async {
+    if (!connected) {
+      print('Trying to connect to eSense device...');
+      connected = await eSenseManager.connect();
 
-  void _incrementCounter() {
+      setState(() {
+        _deviceStatus = connected ? 'connecting...' : 'connection failed';
+      });
+    }
+  }
+
+  void _listenToESenseEvents() async {
+    eSenseManager.eSenseEvents.listen((event) {
+      print('ESENSE event: $event');
+
+      setState(() {
+        switch (event.runtimeType) {
+          case DeviceNameRead:
+            _deviceName = (event as DeviceNameRead).deviceName ?? 'Unknown';
+            break;
+          case BatteryRead:
+            _voltage = (event as BatteryRead).voltage ?? -1;
+            break;
+          case ButtonEventChanged:
+            _button = (event as ButtonEventChanged).pressed
+                ? 'pressed'
+                : 'not pressed';
+            break;
+          case AccelerometerOffsetRead:
+            // TODO
+            break;
+          case AdvertisementAndConnectionIntervalRead:
+            // TODO
+            break;
+          case SensorConfigRead:
+            // TODO
+            break;
+        }
+      });
+    });
+
+    _getESenseProperties();
+  }
+
+  void _getESenseProperties() async {
+    // get the battery level every 10 secs
+    Timer.periodic(
+      const Duration(seconds: 10),
+      (timer) async =>
+          (connected) ? await eSenseManager.getBatteryVoltage() : null,
+    );
+
+    // wait 2, 3, 4, 5, ... secs before getting the name, offset, etc.
+    // it seems like the eSense BTLE interface does NOT like to get called
+    // several times in a row -- hence, delays are added in the following calls
+    Timer(const Duration(seconds: 2),
+        () async => await eSenseManager.getDeviceName());
+    Timer(const Duration(seconds: 3),
+        () async => await eSenseManager.getAccelerometerOffset());
+    Timer(
+        const Duration(seconds: 4),
+        () async =>
+            await eSenseManager.getAdvertisementAndConnectionInterval());
+    Timer(const Duration(seconds: 15),
+        () async => await eSenseManager.getSensorConfig());
+  }
+
+  StreamSubscription? subscription;
+  void _startListenToSensorEvents() async {
+    // // any changes to the sampling frequency must be done BEFORE listening to sensor events
+    print('setting sampling frequency...');
+    await eSenseManager.setSamplingRate(1);
+
+    // subscribe to sensor event from the eSense device
+    subscription = eSenseManager.sensorEvents.listen((event) {
+      print('SENSOR event: $event');
+      setState(() {
+        _event = event.toString();
+      });
+    });
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      sampling = true;
+    });
+  }
+
+  void _pauseListenToSensorEvents() async {
+    subscription?.cancel();
+    setState(() {
+      sampling = false;
     });
   }
 
   @override
+  void dispose() {
+    _pauseListenToSensorEvents();
+    eSenseManager.disconnect();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('eSense Demo App'),
+        ),
+        body: Align(
+          alignment: Alignment.topLeft,
+          child: ListView(
+            children: [
+              Text('eSense Device Status: \t$_deviceStatus'),
+              Text('eSense Device Name: \t$_deviceName'),
+              Text('eSense Battery Level: \t$_voltage'),
+              Text('eSense Button Event: \t$_button'),
+              const Text(''),
+              Text(_event),
+              Container(
+                height: 80,
+                width: 200,
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                child: TextButton.icon(
+                  onPressed: _connectToESense,
+                  icon: const Icon(Icons.login),
+                  label: const Text(
+                    'CONNECT....',
+                    style: TextStyle(fontSize: 35),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          // a floating button that starts/stops listening to sensor events.
+          // is disabled until we're connected to the device.
+          onPressed: (!eSenseManager.connected)
+              ? null
+              : (!sampling)
+                  ? _startListenToSensorEvents
+                  : _pauseListenToSensorEvents,
+          tooltip: 'Listen to eSense sensors',
+          child: (!sampling)
+              ? const Icon(Icons.play_arrow)
+              : const Icon(Icons.pause),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

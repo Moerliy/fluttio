@@ -1,10 +1,8 @@
-import 'dart:io';
-import 'dart:async';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttio/pages/settings_page.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
+import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -24,7 +22,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late GyroProvider _gyroProvider = GyroProvider();
+  late final GyroProvider _gyroProvider = GyroProvider();
 
   // number of fractional digits to display
   static const int fractionalDigits = 2;
@@ -46,7 +44,8 @@ class _MyAppState extends State<MyApp> {
         providers: [
           ChangeNotifierProvider(create: (_) => _gyroProvider),
         ],
-        child: MaterialApp(
+        child: OverlaySupport.global(
+            child: MaterialApp(
           home: Scaffold(
             appBar: AppBar(
               title: const Text('Device & eSense Sensor Test'),
@@ -55,22 +54,23 @@ class _MyAppState extends State<MyApp> {
               alignment: Alignment.topLeft,
               child: Padding(
                 padding: const EdgeInsets.all(21.0), // Add padding
-                child: ListView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Consumer<GyroProvider>(
                       builder: (context, prov, child) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Gyro:'),
+                            const Text('Gyro:'),
                             Text(
                                 '  X: ${prov.gyro[0].toStringAsFixed(fractionalDigits)}'),
                             Text(
                                 '  Y: ${prov.gyro[1].toStringAsFixed(fractionalDigits)}'),
                             Text(
                                 '  Z: ${prov.gyro[2].toStringAsFixed(fractionalDigits)}'),
-                            SizedBox(height: 10),
-                            Text('Accel:'),
+                            const SizedBox(height: 10),
+                            const Text('Accel:'),
                             Text(
                                 '  X: ${prov.acc[0].toStringAsFixed(fractionalDigits)}'),
                             Text(
@@ -78,47 +78,45 @@ class _MyAppState extends State<MyApp> {
                             Text(
                                 '  Z: ${prov.acc[2].toStringAsFixed(fractionalDigits)}'),
                             Text('Device Status: ${prov.deviceStatus}'),
-                            // Container(
-                            //   height: 80,
-                            //   width: 200,
-                            //   decoration: BoxDecoration(
-                            //       borderRadius: BorderRadius.circular(10),
-                            //       border: Border.all(
-                            //           color: (!prov.connected)
-                            //               ? Colors.blueAccent
-                            //               : Colors.redAccent)),
-                            //   child: TextButton.icon(
-                            //     onPressed: (!prov.connected)
-                            //         ? prov.connectToESense
-                            //         : prov.disconnectFromESense,
-                            //     icon: Icon(
-                            //       (!prov.connected)
-                            //           ? Icons.login
-                            //           : Icons.logout,
-                            //     ),
-                            //     label: Text(
-                            //       (!prov.connected)
-                            //           ? 'Connect eSense'
-                            //           : 'Disconnect eSense',
-                            //       style: const TextStyle(fontSize: 20),
-                            //     ),
-                            //   ),
-                            // ),
-                            ElevatedButton(
-                              onPressed: prov.toggleProvider,
-                              child: Text(prov.useESense
-                                  ? 'Switch to Device Gyro'
-                                  : 'Switch to eSense Gyro'),
-                            ),
                           ],
                         );
                       },
-                    )
+                    ),
+                    const Spacer(),
+                    Center(
+                      child: Builder(
+                        builder: (context) {
+                          return TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SettingsPage(),
+                                ),
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 15.0, horizontal: 30.0),
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                            ),
+                            child: const Text(
+                              'Settings',
+                              style: TextStyle(fontSize: 16.0),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
-        ));
+        )));
   }
 }

@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:esense_flutter/esense.dart';
+import 'package:overlay_support/overlay_support.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
@@ -12,6 +13,7 @@ class GyroProvider with ChangeNotifier {
   List<double> _acc = [0, 0, 0];
 
   bool _useESense = false;
+  bool _switching = false;
 
   // eSense device status
   String _deviceStatus = 'disconnected';
@@ -19,6 +21,8 @@ class GyroProvider with ChangeNotifier {
   late StreamSubscription _subscription;
 
   static Duration sensorInterval = const Duration(milliseconds: 100);
+  static const Duration timeoutSecounds = Duration(seconds: 5);
+  static const Duration conectionCheckRate = Duration(milliseconds: 100);
   static const String eSenseDeviceName = 'eSense-0390';
   final ESenseManager eSenseManager = ESenseManager(eSenseDeviceName);
 
@@ -30,6 +34,7 @@ class GyroProvider with ChangeNotifier {
   List<double> get gyro => _gyro;
   List<double> get acc => _acc;
   bool get useESense => _useESense;
+  bool get switching => _switching;
   String get deviceStatus => _deviceStatus;
   bool get connected => _connected;
 
@@ -41,20 +46,49 @@ class GyroProvider with ChangeNotifier {
   }
 
   void toggleProvider() {
+    _switching = true;
     _useESense = !_useESense;
-    _subscription.cancel();
     if (_useESense) {
       // _listenToESense();
 
-      // Loop for $TIMEOUT_SECONDS over connected
-      // if connected start the listen
-      // else use ESense = false
+      var elapsed = Duration.zero;
+      Timer.periodic(conectionCheckRate, (timer) {
+        if (elapsed >= timeoutSecounds) {
+          timer.cancel();
 
-      // _startListenToGyroSensorEventsESense();
-      _useESense = false;
-      _startListenToGyroSensorEventsDevice();
+          _useESense = false;
+          _subscription.cancel();
+          _startListenToGyroSensorEventsDevice();
+          showSimpleNotification(
+              const Text(
+                  "Failed to connect to eSense device. Using device sensor"),
+              leading: const Icon(Icons.notifications, color: Colors.white),
+              background: Colors.red);
+          _switching = false;
+        } else {
+          elapsed += conectionCheckRate;
+          if (connected) {
+            timer.cancel();
+
+            _subscription.cancel();
+            _startListenToGyroSensorEventsESense();
+            showSimpleNotification(
+              const Text("Connected to eSense device"),
+              leading: const Icon(Icons.notifications, color: Colors.white),
+              background: Colors.blue,
+            );
+            _switching = false;
+          }
+        }
+      });
     } else {
       _startListenToGyroSensorEventsDevice();
+      showSimpleNotification(
+        const Text("Using device sensor"),
+        leading: const Icon(Icons.notifications, color: Colors.white),
+        background: Colors.blue,
+      );
+      _switching = false;
     }
   }
 

@@ -41,6 +41,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   sensors_plus: ^6.1.1
   provider: ^6.1.2
+  overlay_support: ^2.1.0
 
 dev_dependencies:
   flutter_test:

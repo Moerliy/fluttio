@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttio/pages/detail_audio_page.dart';
 import 'package:fluttio/pages/settings_page.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 import 'package:fluttio/pages/device_esense_test_page.dart';
@@ -93,6 +94,30 @@ class _MyAppState extends State<MyApp> {
                               vertical: 15.0, horizontal: 30.0),
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Device & eSense Test',
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DetailAudioPage(),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 15.0, horizontal: 30.0),
+                          backgroundColor: Colors.grey,
+                          foregroundColor: Colors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
                           ),

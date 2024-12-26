@@ -12,13 +12,16 @@ class GyroProvider with ChangeNotifier {
   List<double> _gyro = [0, 0, 0];
   List<double> _acc = [0, 0, 0];
 
+  // fonctions to exec when _acc changes
+  final List<Function(List<double>)> _accListeners = [];
+
   bool _useESense = false;
   bool _switching = false;
 
   // eSense device status
   String _deviceStatus = 'disconnected';
   bool _connected = false;
-  late StreamSubscription _subscription;
+  final List<StreamSubscription> _subscriptions = [];
 
   static Duration sensorInterval = const Duration(milliseconds: 100);
   static const Duration timeoutSecounds = Duration(seconds: 5);
@@ -38,11 +41,23 @@ class GyroProvider with ChangeNotifier {
   String get deviceStatus => _deviceStatus;
   bool get connected => _connected;
 
+  set acc(List<double> value) {
+    _acc = value;
+    for (var element in _accListeners) {
+      element(value);
+    }
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _pauseListenToSensorEvents();
     eSenseManager.disconnect();
     super.dispose();
+  }
+
+  void addAccListener(Function(List<double>) listener) {
+    _accListeners.add(listener);
   }
 
   void toggleProvider() {
@@ -57,7 +72,9 @@ class GyroProvider with ChangeNotifier {
           timer.cancel();
 
           _useESense = false;
-          _subscription.cancel();
+          for (var element in _subscriptions) {
+            element.cancel();
+          }
           _startListenToGyroSensorEventsDevice();
           showSimpleNotification(
               const Text(
@@ -70,7 +87,9 @@ class GyroProvider with ChangeNotifier {
           if (connected) {
             timer.cancel();
 
-            _subscription.cancel();
+            for (var element in _subscriptions) {
+              element.cancel();
+            }
             _startListenToGyroSensorEventsESense();
             showSimpleNotification(
               const Text("Connected to eSense device"),
@@ -180,7 +199,7 @@ class GyroProvider with ChangeNotifier {
     print('setting sampling frequency to $samplingRateHZ Hz');
     await eSenseManager.setSamplingRate(samplingRateHZ.round());
 
-    _subscription = eSenseManager.sensorEvents.listen((event) {
+    var subscription = eSenseManager.sensorEvents.listen((event) {
       // only update state, if the event contains valid data
       if (event.gyro != null && event.accel != null) {
         var eSenseGyro = [event.gyro![0], event.gyro![1], event.gyro![2]]
@@ -198,21 +217,30 @@ class GyroProvider with ChangeNotifier {
           eSenseGyro[1] * (-1),
           eSenseGyro[0] * (-1)
         ];
-        _acc = [eSenseAcc[2] * (-1), eSenseAcc[1] * (-1), eSenseAcc[0] * (-1)];
+        acc = [eSenseAcc[2] * (-1), eSenseAcc[1] * (-1), eSenseAcc[0] * (-1)];
         notifyListeners();
       }
     });
+    _subscriptions.add(subscription);
   }
 
   _startListenToGyroSensorEventsDevice() async {
-    _subscription = gyroscopeEventStream().listen((GyroscopeEvent event) {
+    var subscription = gyroscopeEventStream().listen((GyroscopeEvent event) {
       _gyro = [event.x, event.y, event.z].map((e) => e * (180 / pi)).toList();
-      _acc = [event.x, event.y, event.z];
       notifyListeners();
     });
+    var subscription2 =
+        accelerometerEventStream().listen((AccelerometerEvent event) {
+      acc = [event.x, event.y, event.z];
+      notifyListeners();
+    });
+    _subscriptions.add(subscription);
+    _subscriptions.add(subscription2);
   }
 
   void _pauseListenToSensorEvents() async {
-    _subscription.cancel();
+    for (var element in _subscriptions) {
+      element.cancel();
+    }
   }
 }

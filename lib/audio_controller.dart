@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
@@ -21,6 +23,7 @@ class _AudioControllerState extends State<AudioController> {
   double _playbackRate = 1.0;
   double _balance = 0.0;
   Color _repeatColor = Colors.black;
+  final List<StreamSubscription> _streamSubscriptions = [];
   final List<IconData> _icons = [
     Icons.play_arrow,
     Icons.pause,
@@ -31,17 +34,18 @@ class _AudioControllerState extends State<AudioController> {
   @override
   void initState() {
     super.initState();
-    widget.audioPlayer.onDurationChanged.listen((d) {
+    _streamSubscriptions.add(widget.audioPlayer.onDurationChanged.listen((d) {
       setState(() {
         _duration = d;
       });
-    });
-    widget.audioPlayer.onPositionChanged.listen((p) {
+    }));
+    _streamSubscriptions.add(widget.audioPlayer.onPositionChanged.listen((p) {
       setState(() {
         _position = p;
       });
-    });
-    widget.audioPlayer.onPlayerComplete.listen((event) {
+    }));
+    _streamSubscriptions
+        .add(widget.audioPlayer.onPlayerComplete.listen((event) {
       setState(() {
         if (!_isOnRepeat) {
           _isPlaying = false;
@@ -49,17 +53,28 @@ class _AudioControllerState extends State<AudioController> {
           _position = Duration.zero;
         }
       });
-    });
+    }));
     widget.audioPlayer.setSourceUrl(url);
 
-    widget.gyroProvider.addAccListener((List<double> acc) {
-      // normalize acc to [-1, 1]
-      double x = (acc[0] / 9.8) * -1;
-      setState(() {
-        _balance = x;
-        widget.audioPlayer.setBalance(_balance);
-      });
+    widget.gyroProvider.addAccListener(_changeBalanceCallBack);
+  }
+
+  void _changeBalanceCallBack(List<double> acc) {
+    // normalize acc to [-1, 1]
+    double x = (acc[0] / 9.8) * -1;
+    setState(() {
+      _balance = x;
+      widget.audioPlayer.setBalance(_balance);
     });
+  }
+
+  @override
+  void dispose() {
+    widget.gyroProvider.removeAccListener(_changeBalanceCallBack);
+    for (var element in _streamSubscriptions) {
+      element.cancel();
+    }
+    super.dispose();
   }
 
   Widget _btnStart() {

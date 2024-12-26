@@ -60,6 +60,10 @@ class GyroProvider with ChangeNotifier {
     _accListeners.add(listener);
   }
 
+  void removeAccListener(Function(List<double>) listener) {
+    _accListeners.remove(listener);
+  }
+
   void toggleProvider() {
     _switching = true;
     _useESense = !_useESense;

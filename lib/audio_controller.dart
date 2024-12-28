@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
+import 'package:fluttio/providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 
 class AudioController extends StatefulWidget {
   final AudioPlayer audioPlayer;
@@ -22,7 +25,7 @@ class _AudioControllerState extends State<AudioController> {
   bool _isOnRepeat = false;
   double _playbackRate = 1.0;
   double _balance = 0.0;
-  Color _repeatColor = Colors.black;
+  Color? _repeatColor;
   final List<StreamSubscription> _streamSubscriptions = [];
   final List<IconData> _icons = [
     Icons.play_arrow,
@@ -78,29 +81,34 @@ class _AudioControllerState extends State<AudioController> {
   }
 
   Widget _btnStart() {
-    return IconButton(
-      icon: Icon(_icons[_isPlaying ? 1 : 0], size: 30, color: Colors.blue),
-      onPressed: () {
-        if (_isPlaying) {
-          widget.audioPlayer.pause();
-          setState(() {
-            _isPlaying = false;
-            _isPaused = true;
-          });
-        } else {
-          widget.audioPlayer.play(UrlSource(url));
-          setState(() {
-            _isPlaying = true;
-            _isPaused = false;
-          });
-        }
-      },
-    );
+    return Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+      return IconButton(
+        icon: Icon(_icons[_isPlaying ? 1 : 0],
+            size: 30,
+            color: getColorMap(settingsProvider.themeFlavor)["mauve"]),
+        onPressed: () {
+          if (_isPlaying) {
+            widget.audioPlayer.pause();
+            setState(() {
+              _isPlaying = false;
+              _isPaused = true;
+            });
+          } else {
+            widget.audioPlayer.play(UrlSource(url));
+            setState(() {
+              _isPlaying = true;
+              _isPaused = false;
+            });
+          }
+        },
+      );
+    });
   }
 
   Widget _bntFast() {
     return IconButton(
-      icon: const Icon(Icons.fast_forward, size: 20, color: Colors.black),
+      icon: const Icon(Icons.fast_forward, size: 20),
       onPressed: () {
         setState(() {
           _playbackRate = 1.5;
@@ -112,7 +120,7 @@ class _AudioControllerState extends State<AudioController> {
 
   Widget _bntSlow() {
     return IconButton(
-      icon: const Icon(Icons.fast_rewind, size: 20, color: Colors.black),
+      icon: const Icon(Icons.fast_rewind, size: 20),
       onPressed: () {
         setState(() {
           _playbackRate = 0.5;
@@ -123,31 +131,37 @@ class _AudioControllerState extends State<AudioController> {
   }
 
   Widget _btnRepeat() {
-    return IconButton(
-      icon: Icon(Icons.repeat, size: 20, color: _repeatColor),
-      onPressed: () {
-        if (_isOnRepeat) {
-          widget.audioPlayer.setReleaseMode(ReleaseMode.stop);
-          setState(() {
-            _isOnRepeat = false;
-            _repeatColor = Colors.black;
-          });
-        } else {
-          widget.audioPlayer.setReleaseMode(ReleaseMode.loop);
-          setState(() {
-            _isOnRepeat = true;
-            _repeatColor = Colors.blue;
-          });
-        }
-      },
-    );
+    return Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+      return IconButton(
+        icon: Icon(Icons.repeat,
+            size: 20,
+            color: _repeatColor ??
+                getColorMap(settingsProvider.themeFlavor)["text"]),
+        onPressed: () {
+          if (_isOnRepeat) {
+            widget.audioPlayer.setReleaseMode(ReleaseMode.stop);
+            setState(() {
+              _isOnRepeat = false;
+              _repeatColor = getColorMap(settingsProvider.themeFlavor)["text"];
+            });
+          } else {
+            widget.audioPlayer.setReleaseMode(ReleaseMode.loop);
+            setState(() {
+              _isOnRepeat = true;
+              _repeatColor = getColorMap(settingsProvider.themeFlavor)["mauve"];
+            });
+          }
+        },
+      );
+    });
   }
 
   Widget _btnPlayBackRate() {
     return IconButton(
       icon: Text(
         _playbackRate.toString(),
-        style: const TextStyle(fontSize: 15, color: Colors.black),
+        style: const TextStyle(fontSize: 15),
       ),
       onPressed: () {
         if (_playbackRate != 1.0) {
@@ -161,19 +175,22 @@ class _AudioControllerState extends State<AudioController> {
   }
 
   Widget _slider() {
-    return Slider(
-      activeColor: Colors.red,
-      inactiveColor: Colors.grey,
-      value: _position.inSeconds.toDouble(),
-      min: 0.0,
-      max: _duration.inSeconds.toDouble(),
-      onChanged: (double value) {
-        setState(() {
-          changeToSecond(value.toInt());
-          value = value;
-        });
-      },
-    );
+    return Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+      return Slider(
+        activeColor: getColorMap(settingsProvider.themeFlavor)["red"],
+        inactiveColor: getColorMap(settingsProvider.themeFlavor)["text"],
+        value: _position.inSeconds.toDouble(),
+        min: 0.0,
+        max: _duration.inSeconds.toDouble(),
+        onChanged: (double value) {
+          setState(() {
+            changeToSecond(value.toInt());
+            value = value;
+          });
+        },
+      );
+    });
   }
 
   void changeToSecond(int second) {

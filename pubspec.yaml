@@ -43,6 +43,7 @@ dependencies:
   provider: ^6.1.2
   overlay_support: ^2.1.0
   audioplayers: ^6.1.0
+  catppuccin_flutter: ^1.0.0
 
 dev_dependencies:
   flutter_test:

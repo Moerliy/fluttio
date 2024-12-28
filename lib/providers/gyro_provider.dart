@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:esense_flutter/esense.dart';
+import 'package:fluttio/models/theme.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -64,7 +66,7 @@ class GyroProvider with ChangeNotifier {
     _accListeners.remove(listener);
   }
 
-  void toggleProvider() {
+  void toggleProvider(Flavor flavor) {
     _switching = true;
     _useESense = !_useESense;
     if (_useESense) {
@@ -81,10 +83,13 @@ class GyroProvider with ChangeNotifier {
           }
           _startListenToGyroSensorEventsDevice();
           showSimpleNotification(
-              const Text(
-                  "Failed to connect to eSense device. Using device sensor"),
-              leading: const Icon(Icons.notifications, color: Colors.white),
-              background: Colors.red);
+              Text(
+                "Failed to connect to eSense device. Using device sensor",
+                style: TextStyle(color: getColorMap(flavor)["surface0"]),
+              ),
+              leading: Icon(Icons.notifications,
+                  color: getColorMap(flavor)["surface0"]),
+              background: getColorMap(flavor)["red"]);
           _switching = false;
         } else {
           elapsed += conectionCheckRate;
@@ -96,10 +101,13 @@ class GyroProvider with ChangeNotifier {
             }
             _startListenToGyroSensorEventsESense();
             showSimpleNotification(
-              const Text("Connected to eSense device"),
-              leading: const Icon(Icons.notifications, color: Colors.white),
-              background: Colors.blue,
-            );
+                Text(
+                  "Connected to eSense device",
+                  style: TextStyle(color: getColorMap(flavor)["surface0"]),
+                ),
+                leading: Icon(Icons.notifications,
+                    color: getColorMap(flavor)["surface0"]),
+                background: getColorMap(flavor)["green"]);
             _switching = false;
           }
         }
@@ -107,10 +115,13 @@ class GyroProvider with ChangeNotifier {
     } else {
       _startListenToGyroSensorEventsDevice();
       showSimpleNotification(
-        const Text("Using device sensor"),
-        leading: const Icon(Icons.notifications, color: Colors.white),
-        background: Colors.blue,
-      );
+          Text(
+            "Using device sensor",
+            style: TextStyle(color: getColorMap(flavor)["surface0"]),
+          ),
+          leading:
+              Icon(Icons.notifications, color: getColorMap(flavor)["surface0"]),
+          background: getColorMap(flavor)["blue"]);
       _switching = false;
     }
   }

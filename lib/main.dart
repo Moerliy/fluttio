@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/pages/detail_audio_page.dart';
+import 'package:fluttio/pages/select_music_page.dart';
 import 'package:fluttio/pages/settings_page.dart';
-import 'package:fluttio/pages/test_page.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 import 'package:fluttio/pages/device_esense_test_page.dart';
 import 'package:overlay_support/overlay_support.dart';
@@ -173,6 +173,36 @@ class _MyAppState extends State<MyApp> {
                               ),
                               child: const Text(
                                 'Settings',
+                                style: TextStyle(fontSize: 16.0),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: buttonWidth,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const SelectMusicPage(),
+                                  ),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 15.0, horizontal: 30.0),
+                                backgroundColor: getColorMap(
+                                    settingsProvider.themeFlavor)["overlay0"],
+                                foregroundColor: getColorMap(
+                                    settingsProvider.themeFlavor)["text"],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                              ),
+                              child: const Text(
+                                'Select Music',
                                 style: TextStyle(fontSize: 16.0),
                               ),
                             ),

@@ -34,81 +34,118 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
           ),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        getColorMap(settingsProvider.themeFlavor)["overlay0"],
-                    disabledBackgroundColor:
-                        getColorMap(settingsProvider.themeFlavor)["surface0"],
-                  ),
-                  onPressed: gyroProvider.switching
-                      ? null
-                      : () => gyroProvider.toggleProvider(settingsProvider
-                          .themeFlavor), // Replace `true` with the desired argument
-                  child: gyroProvider.switching
-                      ? CircularProgressIndicator(
-                          color: getColorMap(
-                              settingsProvider.themeFlavor)["mauve"])
-                      : Text(
-                          gyroProvider.useESense
-                              ? 'Switch to Device Gyro'
-                              : 'Switch to eSense Gyro',
-                          style: TextStyle(
-                              color: getColorMap(
-                                  settingsProvider.themeFlavor)["text"]),
-                        ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
-                  decoration: BoxDecoration(
-                    color:
-                        getColorMap(settingsProvider.themeFlavor)["surface0"],
-                    borderRadius: BorderRadius.circular(10.0),
-                    border: Border.all(
-                      color: getColorMap(
-                          settingsProvider.themeFlavor)["overlay0"]!,
-                      width: 2.0,
+          body: ListView(
+            children: [
+              _buildSection([
+                _buildTile(
+                  title: gyroProvider.useESense
+                      ? 'Using ESense Gyro'
+                      : 'Using Device Gyro',
+                  trailing: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          getColorMap(settingsProvider.themeFlavor)["overlay0"],
+                      disabledBackgroundColor:
+                          getColorMap(settingsProvider.themeFlavor)["surface0"],
                     ),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<Flavor>(
-                      value: settingsProvider.themeFlavor,
-                      dropdownColor:
-                          getColorMap(settingsProvider.themeFlavor)["base"],
-                      onChanged: (Flavor? newFlavor) {
-                        if (newFlavor != null) {
-                          settingsProvider.setThemeFlavor(newFlavor);
-                        }
-                      },
-                      items: flavorNames.keys.map((Flavor flavor) {
-                        return DropdownMenuItem<Flavor>(
-                          value: flavor,
-                          child: Text(
-                            flavorNames[flavor]!,
+                    onPressed: gyroProvider.switching
+                        ? null
+                        : () => gyroProvider.toggleProvider(settingsProvider
+                            .themeFlavor), // Replace `true` with the desired argument
+                    child: gyroProvider.switching
+                        ? CircularProgressIndicator(
+                            color: getColorMap(
+                                settingsProvider.themeFlavor)["mauve"])
+                        : Text(
+                            "Switch",
                             style: TextStyle(
-                              color: getColorMap(
-                                  settingsProvider.themeFlavor)["text"],
-                            ),
+                                color: getColorMap(
+                                    settingsProvider.themeFlavor)["text"]),
                           ),
-                        );
-                      }).toList(),
-                      icon: Icon(
-                        Icons.arrow_drop_down,
-                        color:
-                            getColorMap(settingsProvider.themeFlavor)["text"],
+                  ),
+                  leadingIcon: Icons.gps_fixed,
+                ),
+              ]),
+              _buildSection([
+                _buildTile(
+                  title: "Theme",
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0, vertical: 0),
+                    decoration: BoxDecoration(
+                      color:
+                          getColorMap(settingsProvider.themeFlavor)["surface0"],
+                      borderRadius: BorderRadius.circular(10.0),
+                      border: Border.all(
+                        color: getColorMap(
+                            settingsProvider.themeFlavor)["overlay0"]!,
+                        width: 2.0,
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<Flavor>(
+                        value: settingsProvider.themeFlavor,
+                        dropdownColor:
+                            getColorMap(settingsProvider.themeFlavor)["base"],
+                        onChanged: (Flavor? newFlavor) {
+                          if (newFlavor != null) {
+                            settingsProvider.setThemeFlavor(newFlavor);
+                          }
+                        },
+                        items: flavorNames.keys.map((Flavor flavor) {
+                          return DropdownMenuItem<Flavor>(
+                            value: flavor,
+                            child: Text(
+                              flavorNames[flavor]!,
+                              style: TextStyle(
+                                color: getColorMap(
+                                    settingsProvider.themeFlavor)["text"],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color:
+                              getColorMap(settingsProvider.themeFlavor)["text"],
+                        ),
                       ),
                     ),
                   ),
+                  leadingIcon: Icons.color_lens,
                 ),
-              ],
-            ),
+              ])
+            ],
           ));
     });
+  }
+
+  Widget _buildTile({
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    required IconData leadingIcon,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      child: Consumer<SettingsProvider>(
+          builder: (context, settingsProvider, child) {
+        return ListTile(
+          title: Text(title, style: const TextStyle(fontSize: 16)),
+          subtitle: subtitle != null ? Text(subtitle) : null,
+          leading: Icon(leadingIcon,
+              color: getColorMap(settingsProvider.themeFlavor)["mauve"]),
+          trailing: trailing ?? const Icon(Icons.chevron_right),
+          onTap: onTap,
+        );
+      }),
+    );
+  }
+
+  Widget _buildSection(List<Widget> tiles) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: tiles,
+    );
   }
 }

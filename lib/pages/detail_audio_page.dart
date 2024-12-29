@@ -7,7 +7,8 @@ import 'package:fluttio/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class DetailAudioPage extends StatefulWidget {
-  const DetailAudioPage({super.key});
+  final Color borderColor;
+  const DetailAudioPage({super.key, required this.borderColor});
 
   @override
   State<DetailAudioPage> createState() => _DetailAudioPageState();
@@ -99,7 +100,7 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   // shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: widget.borderColor, width: 2),
                   color: getColorMap(settingsProvider.themeFlavor)["overlay1"],
                 ),
                 child: Padding(
@@ -107,7 +108,7 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 5),
+                      border: Border.all(color: widget.borderColor, width: 5),
                       image: const DecorationImage(
                         image: AssetImage('assets/images/test_audio_cover.jpg'),
                         fit: BoxFit.cover,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/pages/detail_audio_page.dart';
 import 'package:fluttio/pages/settings_page.dart';
+import 'package:fluttio/pages/test_page.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 import 'package:fluttio/pages/device_esense_test_page.dart';
 import 'package:overlay_support/overlay_support.dart';
@@ -92,8 +93,11 @@ class _MyAppState extends State<MyApp> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const DetailAudioPage(),
+                                    builder: (context) => DetailAudioPage(
+                                        borderColor: getColorMap(
+                                                settingsProvider
+                                                    .themeFlavor)["base"] ??
+                                            Colors.white),
                                   ),
                                 );
                               },

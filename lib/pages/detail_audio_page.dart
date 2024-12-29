@@ -1,14 +1,18 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttio/audio_controller.dart';
+import 'package:fluttio/communication_manager.dart';
 import 'package:fluttio/models/theme.dart';
+import 'package:fluttio/models/track.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 import 'package:fluttio/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class DetailAudioPage extends StatefulWidget {
   final Color borderColor;
-  const DetailAudioPage({super.key, required this.borderColor});
+  final Track track;
+  const DetailAudioPage(
+      {super.key, required this.track, required this.borderColor});
 
   @override
   State<DetailAudioPage> createState() => _DetailAudioPageState();
@@ -16,11 +20,18 @@ class DetailAudioPage extends StatefulWidget {
 
 class _DetailAudioPageState extends State<DetailAudioPage> {
   late AudioPlayer audioPlayer;
+  static Image? _img = null;
 
   @override
   void initState() {
     super.initState();
     audioPlayer = AudioPlayer();
+    // fetch image
+    fetchImage(widget.track.image).then((image) {
+      setState(() {
+        _img = image;
+      });
+    });
   }
 
   @override
@@ -79,13 +90,14 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.1),
-                      const Text('Audio Title',
-                          style: TextStyle(
+                      Text(widget.track.name,
+                          style: const TextStyle(
                               fontSize: 30, fontWeight: FontWeight.bold)),
-                      const Text('Audio Artist',
-                          style: TextStyle(fontSize: 20)),
+                      Text(widget.track.artistName,
+                          style: const TextStyle(fontSize: 20)),
                       AudioController(
                         audioPlayer: audioPlayer,
+                        url: widget.track.audio,
                         gyroProvider: gyroProvider,
                       ),
                     ],
@@ -109,8 +121,11 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: widget.borderColor, width: 5),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/test_audio_cover.jpg'),
+                      image: DecorationImage(
+                        image: _img == null
+                            ? const AssetImage(
+                                'assets/images/test_audio_cover.jpg')
+                            : _img!.image,
                         fit: BoxFit.cover,
                       ),
                     ),

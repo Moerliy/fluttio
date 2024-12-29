@@ -9,9 +9,13 @@ import 'package:provider/provider.dart';
 
 class AudioController extends StatefulWidget {
   final AudioPlayer audioPlayer;
+  final String url;
   final GyroProvider gyroProvider;
   const AudioController(
-      {super.key, required this.audioPlayer, required this.gyroProvider});
+      {super.key,
+      required this.audioPlayer,
+      required this.url,
+      required this.gyroProvider});
 
   @override
   State<AudioController> createState() => _AudioControllerState();
@@ -23,16 +27,16 @@ class _AudioControllerState extends State<AudioController> {
   bool _isPlaying = false;
   bool _isPaused = false;
   bool _isOnRepeat = false;
+  bool _isOn3DAudio = false;
   double _playbackRate = 1.0;
   double _balance = 0.0;
   Color? _repeatColor;
+  Color? _3DAudioColor;
   final List<StreamSubscription> _streamSubscriptions = [];
   final List<IconData> _icons = [
     Icons.play_arrow,
     Icons.pause,
   ];
-  final String url =
-      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
   @override
   void initState() {
@@ -57,7 +61,7 @@ class _AudioControllerState extends State<AudioController> {
         }
       });
     }));
-    widget.audioPlayer.setSourceUrl(url);
+    widget.audioPlayer.setSourceUrl(widget.url);
 
     widget.gyroProvider.addAccListener(_changeBalanceCallBack);
   }
@@ -66,7 +70,7 @@ class _AudioControllerState extends State<AudioController> {
     // normalize acc to [-1, 1]
     double x = (acc[0] / 9.8) * -1;
     setState(() {
-      _balance = x;
+      _balance = _isOn3DAudio ? x : 0.0;
       widget.audioPlayer.setBalance(_balance);
     });
   }
@@ -95,7 +99,7 @@ class _AudioControllerState extends State<AudioController> {
               _isPaused = true;
             });
           } else {
-            widget.audioPlayer.play(UrlSource(url));
+            widget.audioPlayer.play(UrlSource(widget.url));
             setState(() {
               _isPlaying = true;
               _isPaused = false;
@@ -174,6 +178,35 @@ class _AudioControllerState extends State<AudioController> {
     );
   }
 
+  Widget _btn3DAudio() {
+    return Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+      return IconButton(
+        icon: Icon(Icons.audiotrack,
+            size: 20,
+            color: _3DAudioColor ??
+                getColorMap(settingsProvider.themeFlavor)["text"]),
+        onPressed: () {
+          if (_isOn3DAudio) {
+            widget.audioPlayer.setReleaseMode(ReleaseMode.stop);
+            setState(() {
+              _isOn3DAudio = false;
+              _3DAudioColor = getColorMap(settingsProvider.themeFlavor)["text"];
+            });
+            widget.audioPlayer.setBalance(0.0);
+          } else {
+            widget.audioPlayer.setReleaseMode(ReleaseMode.loop);
+            setState(() {
+              _isOn3DAudio = true;
+              _3DAudioColor =
+                  getColorMap(settingsProvider.themeFlavor)["mauve"];
+            });
+          }
+        },
+      );
+    });
+  }
+
   Widget _slider() {
     return Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
@@ -209,6 +242,7 @@ class _AudioControllerState extends State<AudioController> {
           _btnStart(),
           _bntFast(),
           _btnPlayBackRate(),
+          _btn3DAudio(),
         ],
       ),
     );

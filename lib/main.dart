@@ -85,39 +85,39 @@ class _MyAppState extends State<MyApp> {
                               fontWeight: FontWeight.normal,
                             ),
                           ),
-                          const SizedBox(height: 40),
-                          SizedBox(
-                            width: buttonWidth,
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DetailAudioPage(
-                                        borderColor: getColorMap(
-                                                settingsProvider
-                                                    .themeFlavor)["base"] ??
-                                            Colors.white),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 15.0, horizontal: 30.0),
-                                backgroundColor: getColorMap(
-                                    settingsProvider.themeFlavor)["overlay0"],
-                                foregroundColor: getColorMap(
-                                    settingsProvider.themeFlavor)["text"],
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                              ),
-                              child: const Text(
-                                'Listen To Music',
-                                style: TextStyle(fontSize: 16.0),
-                              ),
-                            ),
-                          ),
+                          // const SizedBox(height: 40),
+                          // SizedBox(
+                          //   width: buttonWidth,
+                          //   child: TextButton(
+                          //     onPressed: () {
+                          //       Navigator.push(
+                          //         context,
+                          //         MaterialPageRoute(
+                          //           builder: (context) => DetailAudioPage(
+                          //               borderColor: getColorMap(
+                          //                       settingsProvider
+                          //                           .themeFlavor)["base"] ??
+                          //                   Colors.white),
+                          //         ),
+                          //       );
+                          //     },
+                          //     style: TextButton.styleFrom(
+                          //       padding: const EdgeInsets.symmetric(
+                          //           vertical: 15.0, horizontal: 30.0),
+                          //       backgroundColor: getColorMap(
+                          //           settingsProvider.themeFlavor)["overlay0"],
+                          //       foregroundColor: getColorMap(
+                          //           settingsProvider.themeFlavor)["text"],
+                          //       shape: RoundedRectangleBorder(
+                          //         borderRadius: BorderRadius.circular(10.0),
+                          //       ),
+                          //     ),
+                          //     child: const Text(
+                          //       'Listen To Music',
+                          //       style: TextStyle(fontSize: 16.0),
+                          //     ),
+                          //   ),
+                          // ),
                           const SizedBox(height: 20),
                           SizedBox(
                             width: buttonWidth,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:fluttio/models/track.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
 
 Future<List<Track>> fetchTracks(String clientId, {int limit = 1}) async {
   final url =
@@ -18,5 +19,14 @@ Future<List<Track>> fetchTracks(String clientId, {int limit = 1}) async {
     throw Exception('No tracks found');
   } else {
     throw Exception('Failed to fetch tracks');
+  }
+}
+
+Future<Image> fetchImage(String url) async {
+  final response = await http.get(Uri.parse(url));
+  if (response.statusCode == 200) {
+    return Image.memory(response.bodyBytes);
+  } else {
+    throw Exception('Failed to fetch image');
   }
 }

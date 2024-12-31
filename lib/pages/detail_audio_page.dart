@@ -20,18 +20,11 @@ class DetailAudioPage extends StatefulWidget {
 
 class _DetailAudioPageState extends State<DetailAudioPage> {
   late AudioPlayer audioPlayer;
-  static Image? _img = null;
 
   @override
   void initState() {
     super.initState();
     audioPlayer = AudioPlayer();
-    // fetch image
-    fetchImage(widget.track.image).then((image) {
-      setState(() {
-        _img = image;
-      });
-    });
   }
 
   @override
@@ -90,11 +83,19 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.1),
-                      Text(widget.track.name,
-                          style: const TextStyle(
-                              fontSize: 30, fontWeight: FontWeight.bold)),
-                      Text(widget.track.artistName,
-                          style: const TextStyle(fontSize: 20)),
+                      Text(
+                        widget.track.name,
+                        style: const TextStyle(
+                            fontSize: 30, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                      Text(
+                        widget.track.artistName,
+                        style: const TextStyle(fontSize: 20),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                       AudioController(
                         audioPlayer: audioPlayer,
                         url: widget.track.audio,
@@ -122,10 +123,7 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                       shape: BoxShape.circle,
                       border: Border.all(color: widget.borderColor, width: 5),
                       image: DecorationImage(
-                        image: _img == null
-                            ? const AssetImage(
-                                'assets/images/test_audio_cover.jpg')
-                            : _img!.image,
+                        image: NetworkImage(widget.track.image),
                         fit: BoxFit.cover,
                       ),
                     ),

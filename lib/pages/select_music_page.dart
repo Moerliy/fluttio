@@ -69,11 +69,7 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => DetailAudioPage(
-                    borderColor:
-                        getColorMap(settingsProvider.themeFlavor)["base"] ??
-                            Colors.white,
-                    track: track),
+                builder: (context) => DetailAudioPage(track: track),
               ),
             );
           },

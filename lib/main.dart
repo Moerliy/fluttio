@@ -5,6 +5,7 @@ import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/pages/detail_audio_page.dart';
 import 'package:fluttio/pages/select_music_page.dart';
 import 'package:fluttio/pages/settings_page.dart';
+import 'package:fluttio/providers/audio_provider.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 import 'package:fluttio/pages/device_esense_test_page.dart';
 import 'package:overlay_support/overlay_support.dart';
@@ -50,6 +51,7 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => _gyroProvider),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => AudioProvider(_gyroProvider)),
       ],
       child: OverlaySupport.global(
         child: Consumer<SettingsProvider>(
@@ -85,39 +87,6 @@ class _MyAppState extends State<MyApp> {
                               fontWeight: FontWeight.normal,
                             ),
                           ),
-                          // const SizedBox(height: 40),
-                          // SizedBox(
-                          //   width: buttonWidth,
-                          //   child: TextButton(
-                          //     onPressed: () {
-                          //       Navigator.push(
-                          //         context,
-                          //         MaterialPageRoute(
-                          //           builder: (context) => DetailAudioPage(
-                          //               borderColor: getColorMap(
-                          //                       settingsProvider
-                          //                           .themeFlavor)["base"] ??
-                          //                   Colors.white),
-                          //         ),
-                          //       );
-                          //     },
-                          //     style: TextButton.styleFrom(
-                          //       padding: const EdgeInsets.symmetric(
-                          //           vertical: 15.0, horizontal: 30.0),
-                          //       backgroundColor: getColorMap(
-                          //           settingsProvider.themeFlavor)["overlay0"],
-                          //       foregroundColor: getColorMap(
-                          //           settingsProvider.themeFlavor)["text"],
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(10.0),
-                          //       ),
-                          //     ),
-                          //     child: const Text(
-                          //       'Listen To Music',
-                          //       style: TextStyle(fontSize: 16.0),
-                          //     ),
-                          //   ),
-                          // ),
                           const SizedBox(height: 20),
                           SizedBox(
                             width: buttonWidth,

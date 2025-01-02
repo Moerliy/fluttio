@@ -1,35 +1,29 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttio/audio_controller.dart';
-import 'package:fluttio/communication_manager.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/models/track.dart';
+import 'package:fluttio/providers/audio_provider.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 import 'package:fluttio/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class DetailAudioPage extends StatefulWidget {
-  final Color borderColor;
   final Track track;
-  const DetailAudioPage(
-      {super.key, required this.track, required this.borderColor});
+  const DetailAudioPage({super.key, required this.track});
 
   @override
   State<DetailAudioPage> createState() => _DetailAudioPageState();
 }
 
 class _DetailAudioPageState extends State<DetailAudioPage> {
-  late AudioPlayer audioPlayer;
-
   @override
   void initState() {
     super.initState();
-    audioPlayer = AudioPlayer();
   }
 
   @override
   void dispose() {
-    audioPlayer.dispose();
     super.dispose();
   }
 
@@ -37,8 +31,8 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double screenWidth = MediaQuery.of(context).size.width;
-    return Consumer2<GyroProvider, SettingsProvider>(
-        builder: (context, gyroProvider, settingsProvider, child) {
+    return Consumer3<GyroProvider, SettingsProvider, AudioProvider>(builder:
+        (context, gyroProvider, settingsProvider, audioProvider, child) {
       return Scaffold(
         backgroundColor: getColorMap(settingsProvider.themeFlavor)["base"],
         body: Stack(
@@ -97,9 +91,8 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                         maxLines: 1,
                       ),
                       AudioController(
-                        audioPlayer: audioPlayer,
                         url: widget.track.audio,
-                        gyroProvider: gyroProvider,
+                        audioProvider: audioProvider,
                       ),
                     ],
                   ),
@@ -113,7 +106,11 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   // shape: BoxShape.circle,
-                  border: Border.all(color: widget.borderColor, width: 2),
+                  border: Border.all(
+                      color:
+                          getColorMap(settingsProvider.themeFlavor)["base"] ??
+                              Colors.white,
+                      width: 2),
                   color: getColorMap(settingsProvider.themeFlavor)["overlay1"],
                 ),
                 child: Padding(
@@ -121,7 +118,11 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: widget.borderColor, width: 5),
+                      border: Border.all(
+                          color: getColorMap(
+                                  settingsProvider.themeFlavor)["base"] ??
+                              Colors.white,
+                          width: 5),
                       image: DecorationImage(
                         image: NetworkImage(widget.track.image),
                         fit: BoxFit.cover,

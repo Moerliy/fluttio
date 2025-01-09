@@ -124,11 +124,10 @@ packages:
   esense_flutter:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: "6dc62be7e61d382fe71ec1eeeb499066c5b3ec3b"
-      url: "https://github.com/Yusuf-Duran/esense_flutter"
-    source: git
+      name: esense_flutter
+      sha256: "7eea57e6cf349c7076cfb429ceb1430fe66c38d7ef09fe2024593966a612a4ce"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.0.0"
   fake_async:
     dependency: transitive
@@ -167,6 +166,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_bluetooth_serial:
+    dependency: "direct main"
+    description:
+      name: flutter_bluetooth_serial
+      sha256: "85ae82c4099b2b1facdc54e75e1bcfa88dc7f719e55dc886bb0b648cb16636b1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
   flutter_lints:
     dependency: "direct dev"
     description:

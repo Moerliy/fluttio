@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:esense_flutter/esense.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:fluttio/models/Notification.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -30,6 +32,8 @@ class GyroProvider with ChangeNotifier {
   static const Duration conectionCheckRate = Duration(milliseconds: 100);
   static const String eSenseDeviceName = 'eSense-0390';
   final ESenseManager eSenseManager = ESenseManager(eSenseDeviceName);
+  final List<NotificationEntry> _notificationQueue = [];
+  bool _isNotificationShowing = false;
 
   GyroProvider() {
     _useESense = false;
@@ -66,6 +70,29 @@ class GyroProvider with ChangeNotifier {
     _accListeners.remove(listener);
   }
 
+  void _showNextNotification() {
+    if (_notificationQueue.isNotEmpty && !_isNotificationShowing) {
+      _isNotificationShowing = true;
+      final entry = _notificationQueue.removeAt(0);
+      showSimpleNotification(
+        entry.text,
+        leading: entry.icon,
+        background: entry.background,
+        autoDismiss: true,
+        slideDismissDirection: DismissDirection.up,
+        duration: const Duration(seconds: 3),
+      ).dismissed.then((_) {
+        _isNotificationShowing = false;
+        _showNextNotification();
+      });
+    }
+  }
+
+  void _enqueueNotification(Text text, Icon icon, Color? background) {
+    _notificationQueue.add(NotificationEntry(text, icon, background));
+    _showNextNotification();
+  }
+
   Future<void> toggleProvider(Flavor flavor) async {
     _switching = true;
     _useESense = !_useESense;
@@ -84,14 +111,13 @@ class GyroProvider with ChangeNotifier {
           }
           _subscriptions.clear();
           _startListenToGyroSensorEventsDevice();
-          showSimpleNotification(
+          _enqueueNotification(
               Text(
                 "Failed to connect to eSense device. Using device sensor",
                 style: TextStyle(color: getColorMap(flavor)["surface0"]),
               ),
-              leading: Icon(Icons.notifications,
-                  color: getColorMap(flavor)["surface0"]),
-              background: getColorMap(flavor)["red"]);
+              Icon(Icons.notifications, color: getColorMap(flavor)["surface0"]),
+              getColorMap(flavor)["red"]);
           _switching = false;
           notifyListeners();
         } else {
@@ -104,14 +130,15 @@ class GyroProvider with ChangeNotifier {
             }
             _subscriptions.clear();
             _startListenToGyroSensorEventsESense();
-            showSimpleNotification(
+            _enqueueNotification(
                 Text(
                   "Connected to eSense device",
                   style: TextStyle(color: getColorMap(flavor)["surface0"]),
                 ),
-                leading: Icon(Icons.notifications,
+                Icon(Icons.notifications,
                     color: getColorMap(flavor)["surface0"]),
-                background: getColorMap(flavor)["green"]);
+                getColorMap(flavor)["green"]);
+            _bluetoothESenseConnected(flavor);
             _switching = false;
           }
           notifyListeners();
@@ -123,16 +150,50 @@ class GyroProvider with ChangeNotifier {
       }
       _subscriptions.clear();
       _startListenToGyroSensorEventsDevice();
-      showSimpleNotification(
+      _enqueueNotification(
           Text(
             "Using device sensor",
             style: TextStyle(color: getColorMap(flavor)["surface0"]),
           ),
-          leading:
-              Icon(Icons.notifications, color: getColorMap(flavor)["surface0"]),
-          background: getColorMap(flavor)["blue"]);
+          Icon(Icons.notifications, color: getColorMap(flavor)["surface0"]),
+          getColorMap(flavor)["blue"]);
       _switching = false;
       notifyListeners();
+    }
+  }
+
+  void _bluetoothESenseConnected(Flavor flavor) {
+    if (Platform.isAndroid) {
+      FlutterBluetoothSerial.instance
+          .getBondedDevices()
+          .then((List<BluetoothDevice> devices) {
+        BluetoothDevice? device;
+        try {
+          device = devices.firstWhere(
+            (BluetoothDevice device) => device.name == eSenseDeviceName,
+          );
+        } on StateError {
+          _enqueueNotification(
+              Text(
+                "Connect to ESense via bluetooth with name $eSenseDeviceName for better experience",
+                style: TextStyle(color: getColorMap(flavor)["surface0"]),
+              ),
+              Icon(Icons.notifications, color: getColorMap(flavor)["surface0"]),
+              getColorMap(flavor)["yellow"]);
+          return;
+        }
+
+        if (!device.isConnected) {
+          showSimpleNotification(
+              Text(
+                "Connect to ESense via bluetooth with name $eSenseDeviceName for better experience",
+                style: TextStyle(color: getColorMap(flavor)["surface0"]),
+              ),
+              leading: Icon(Icons.notifications,
+                  color: getColorMap(flavor)["surface0"]),
+              background: getColorMap(flavor)["yellow"]);
+        }
+      });
     }
   }
 

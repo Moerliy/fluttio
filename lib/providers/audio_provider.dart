@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttio/models/track.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 
 class AudioProvider extends ChangeNotifier {
@@ -14,7 +15,7 @@ class AudioProvider extends ChangeNotifier {
   bool _isOn3DAudio = false;
   double _playbackRate = 1.0;
   double _balance = 0.0;
-  String? _currentPlayingUrl;
+  Track? _currentPlayingTrack;
   final List<StreamSubscription> _streamSubscriptions = [];
 
   AudioProvider(this._gyroProvider) {
@@ -30,7 +31,7 @@ class AudioProvider extends ChangeNotifier {
   double get playbackRate => _playbackRate;
   double get balance => _balance;
   bool get hasSource => _audioPlayer.source != null;
-  String? get currentPlayingUrl => _currentPlayingUrl;
+  Track? get currentPlayingTrack => _currentPlayingTrack;
 
   void pause() {
     _isPlaying = false;
@@ -38,24 +39,24 @@ class AudioProvider extends ChangeNotifier {
     _audioPlayer.pause();
   }
 
-  void play({String? url}) {
+  void play({Track? track}) {
     _isPlaying = true;
-    if (url == null) {
+    if (track == null) {
       _audioPlayer.resume();
     } else {
-      _audioPlayer.play(UrlSource(url));
-      _currentPlayingUrl = url;
+      _audioPlayer.play(UrlSource(track.audio));
+      _currentPlayingTrack = track;
     }
     notifyListeners();
   }
 
-  void playNoNotify({String? url}) {
+  void playNoNotify({Track? track}) {
     _isPlaying = true;
-    if (url == null) {
+    if (track == null) {
       _audioPlayer.resume();
     } else {
-      _audioPlayer.play(UrlSource(url));
-      _currentPlayingUrl = url;
+      _audioPlayer.play(UrlSource(track.audio));
+      _currentPlayingTrack = track;
     }
   }
 
@@ -122,9 +123,9 @@ class AudioProvider extends ChangeNotifier {
     }
   }
 
-  void setNewTrack(String url) {
-    _audioPlayer.setSourceUrl(url);
-    _currentPlayingUrl = url;
+  void setNewTrack(Track track) {
+    _audioPlayer.setSourceUrl(track.audio);
+    _currentPlayingTrack = track;
     notifyListeners();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttio/audio_fab.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/providers/gyro_provider.dart';
 import 'package:fluttio/providers/settings_provider.dart';
@@ -24,6 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Consumer2<GyroProvider, SettingsProvider>(
         builder: (context, gyroProvider, settingsProvider, child) {
       return Scaffold(
+          floatingActionButton: AudioFAB(),
           appBar: AppBar(
             title: const Text('Settings'),
             leading: IconButton(

@@ -66,11 +66,12 @@ class GyroProvider with ChangeNotifier {
     _accListeners.remove(listener);
   }
 
-  void toggleProvider(Flavor flavor) {
+  Future<void> toggleProvider(Flavor flavor) async {
     _switching = true;
     _useESense = !_useESense;
     if (_useESense) {
-      // _listenToESense();
+      await connectToESense();
+      _listenToESense();
 
       var elapsed = Duration.zero;
       Timer.periodic(conectionCheckRate, (timer) {
@@ -81,6 +82,7 @@ class GyroProvider with ChangeNotifier {
           for (var element in _subscriptions) {
             element.cancel();
           }
+          _subscriptions.clear();
           _startListenToGyroSensorEventsDevice();
           showSimpleNotification(
               Text(
@@ -91,6 +93,7 @@ class GyroProvider with ChangeNotifier {
                   color: getColorMap(flavor)["surface0"]),
               background: getColorMap(flavor)["red"]);
           _switching = false;
+          notifyListeners();
         } else {
           elapsed += conectionCheckRate;
           if (connected) {
@@ -99,6 +102,7 @@ class GyroProvider with ChangeNotifier {
             for (var element in _subscriptions) {
               element.cancel();
             }
+            _subscriptions.clear();
             _startListenToGyroSensorEventsESense();
             showSimpleNotification(
                 Text(
@@ -110,9 +114,14 @@ class GyroProvider with ChangeNotifier {
                 background: getColorMap(flavor)["green"]);
             _switching = false;
           }
+          notifyListeners();
         }
       });
     } else {
+      for (var element in _subscriptions) {
+        element.cancel();
+      }
+      _subscriptions.clear();
       _startListenToGyroSensorEventsDevice();
       showSimpleNotification(
           Text(
@@ -123,6 +132,7 @@ class GyroProvider with ChangeNotifier {
               Icon(Icons.notifications, color: getColorMap(flavor)["surface0"]),
           background: getColorMap(flavor)["blue"]);
       _switching = false;
+      notifyListeners();
     }
   }
 
@@ -142,15 +152,10 @@ class GyroProvider with ChangeNotifier {
   }
 
   Future<void> _listenToESense() async {
-    await _askForPermissions();
-
     // if you want to get the connection events when connecting,
     // set up the listener BEFORE connecting...
     eSenseManager.connectionEvents.listen((event) {
       print('CONNECTION event: $event');
-
-      // when we're connected to the eSense device, we can start listening to events from it
-      if (event.type == ConnectionType.connected) _listenToESenseEvents();
 
       _connected = false;
       switch (event.type) {
@@ -173,6 +178,7 @@ class GyroProvider with ChangeNotifier {
           _deviceStatus = 'device_not_found';
           break;
       }
+      notifyListeners();
     });
   }
 
@@ -182,6 +188,7 @@ class GyroProvider with ChangeNotifier {
       _connected = await eSenseManager.connect();
 
       _deviceStatus = connected ? 'connecting...' : 'connection failed';
+      notifyListeners();
     }
   }
 
@@ -192,26 +199,13 @@ class GyroProvider with ChangeNotifier {
       _connected = await eSenseManager.disconnect();
 
       _deviceStatus = connected ? 'disconnected' : 'disconnecting...';
+      notifyListeners();
     }
-  }
-
-  void _listenToESenseEvents() async {
-    eSenseManager.eSenseEvents.listen((event) {
-      print('ESENSE event: $event');
-    });
-
-    _getESenseProperties();
-  }
-
-  void _getESenseProperties() async {
-    Timer(const Duration(seconds: 2),
-        () async => await eSenseManager.getAccelerometerOffset());
   }
 
   void _startListenToGyroSensorEventsESense() async {
     // any changes to the sampling frequency must be done BEFORE listening to sensor events
     double samplingRateHZ = 1000.0 / sensorInterval.inMilliseconds;
-    print('setting sampling frequency to $samplingRateHZ Hz');
     await eSenseManager.setSamplingRate(samplingRateHZ.round());
 
     var subscription = eSenseManager.sensorEvents.listen((event) {
@@ -257,5 +251,6 @@ class GyroProvider with ChangeNotifier {
     for (var element in _subscriptions) {
       element.cancel();
     }
+    _subscriptions.clear();
   }
 }

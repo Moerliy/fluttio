@@ -1,6 +1,7 @@
 import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttio/audio_fab.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/pages/detail_audio_page.dart';
 import 'package:fluttio/pages/select_music_page.dart';
@@ -59,6 +60,7 @@ class _MyAppState extends State<MyApp> {
             return MaterialApp(
               theme: catppuccinTheme(settingsProvider.themeFlavor),
               home: Scaffold(
+                floatingActionButton: AudioFAB(),
                 body: Center(
                   child: Builder(
                     builder: (context) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttio/audio_fab.dart';
 import 'package:fluttio/communication_manager.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/models/track.dart';
@@ -136,6 +137,7 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
     return Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
       return Scaffold(
+        floatingActionButton: AudioFAB(),
         body: CustomScrollView(
           slivers: [
             SliverAppBar(

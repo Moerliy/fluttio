@@ -2,15 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:fluttio/models/theme.dart';
+import 'package:fluttio/models/track.dart';
 import 'package:fluttio/providers/audio_provider.dart';
 import 'package:fluttio/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class AudioController extends StatefulWidget {
-  final String url;
+  final Track track;
   final AudioProvider audioProvider;
   const AudioController(
-      {super.key, required this.url, required this.audioProvider});
+      {super.key, required this.track, required this.audioProvider});
 
   @override
   State<AudioController> createState() => _AudioControllerState();
@@ -24,11 +25,12 @@ class _AudioControllerState extends State<AudioController> {
 
   @override
   void initState() {
+    Track? currentTrack = widget.audioProvider.currentPlayingTrack;
     super.initState();
-    if (widget.audioProvider.currentPlayingUrl == widget.url) {
+    if (currentTrack != null && currentTrack.id == widget.track.id) {
       widget.audioProvider.playNoNotify();
     } else {
-      widget.audioProvider.playNoNotify(url: widget.url);
+      widget.audioProvider.playNoNotify(track: widget.track);
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttio/audio_controller.dart';
+import 'package:fluttio/communication_manager.dart';
 import 'package:fluttio/models/theme.dart';
 import 'package:fluttio/models/track.dart';
 import 'package:fluttio/providers/audio_provider.dart';
@@ -17,14 +18,108 @@ class DetailAudioPage extends StatefulWidget {
 }
 
 class _DetailAudioPageState extends State<DetailAudioPage> {
+  final String clientId = "c4a2c85b";
+  List<Track>? _similarTracks; // Store fetched track list.
+
   @override
   void initState() {
     super.initState();
+    _fetchTracks();
+  }
+
+  void _fetchTracks() {
+    fetchSimilarTracks(clientId, widget.track.id, limit: 20).then((tracks) {
+      setState(() {
+        _similarTracks = tracks;
+      });
+    });
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  String formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  Widget _track(Track track) {
+    return Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+        decoration: BoxDecoration(
+          color: getColorMap(settingsProvider.themeFlavor)["overlay0"],
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: ListTile(
+          onTap: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailAudioPage(track: track),
+              ),
+            );
+          },
+          title: Text(
+            track.name,
+            style: const TextStyle(fontSize: 16.0),
+          ),
+          subtitle: Text(
+            track.artistName,
+            style: const TextStyle(fontSize: 14.0),
+          ),
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(track.image),
+          ),
+          trailing: Text(
+            formatDuration(track.duration),
+            style: const TextStyle(fontSize: 14.0),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _trackSkeleton() {
+    return Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+        decoration: BoxDecoration(
+          color: getColorMap(settingsProvider.themeFlavor)["surface2"],
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: ListTile(
+          // onTap: () {
+          // },
+          title: Text(
+            "▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒",
+            style: TextStyle(
+                fontSize: 16.0,
+                color: getColorMap(settingsProvider.themeFlavor)["subtext1"]),
+          ),
+          subtitle: Text(
+            "░░░░░░░░░░░░",
+            style: TextStyle(
+                fontSize: 14.0,
+                color: getColorMap(settingsProvider.themeFlavor)["subtext1"]),
+          ),
+          leading: const CircleAvatar(
+            backgroundImage: AssetImage('assets/images/covor-place-holder.jpg'),
+          ),
+          trailing: Text(
+            "░░░",
+            style: TextStyle(
+                fontSize: 14.0,
+                color: getColorMap(settingsProvider.themeFlavor)["subtext1"]),
+          ),
+        ),
+      );
+    });
   }
 
   @override
@@ -64,6 +159,28 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
               ),
             ),
             Positioned(
+              top: screenHeight * 0.145 + screenHeight * 0.36,
+              left: 0,
+              right: 0,
+              height:
+                  screenHeight - (screenHeight * 0.145 + screenHeight * 0.36),
+              child: Container(
+                color: getColorMap(settingsProvider.themeFlavor)["base"],
+                child: _similarTracks == null
+                    ? ListView.builder(
+                        itemCount: 10, // Number of placeholder items
+                        itemBuilder: (context, index) => _trackSkeleton(),
+                      )
+                    : ListView.builder(
+                        itemCount: _similarTracks!.length,
+                        itemBuilder: (context, index) {
+                          final track = _similarTracks![index];
+                          return _track(track);
+                        },
+                      ),
+              ),
+            ),
+            Positioned(
                 left: 0,
                 right: 0,
                 top: screenHeight * 0.2,
@@ -91,7 +208,7 @@ class _DetailAudioPageState extends State<DetailAudioPage> {
                         maxLines: 1,
                       ),
                       AudioController(
-                        url: widget.track.audio,
+                        track: widget.track,
                         audioProvider: audioProvider,
                       ),
                     ],

@@ -15,12 +15,13 @@ class AudioProvider extends ChangeNotifier {
   bool _isOn3DAudio = false;
   double _playbackRate = 1.0;
   double _balance = 0.0;
+  double _volume = 1.0;
   Track? _currentPlayingTrack;
   final List<StreamSubscription> _streamSubscriptions = [];
 
   AudioProvider(this._gyroProvider) {
     _subscribeToAudioPlayer();
-    _gyroProvider.addAccListener(_changeBalanceCallBack);
+    _gyroProvider.addAccListener(_changeBalanceVolumeCallBack);
   }
 
   Duration get duration => _duration;
@@ -76,6 +77,7 @@ class AudioProvider extends ChangeNotifier {
     _isOn3DAudio = newVal;
     if (_isOn3DAudio == false) {
       _balance = 0.0;
+      _volume = 1.0;
     }
     notifyListeners();
   }
@@ -108,16 +110,19 @@ class AudioProvider extends ChangeNotifier {
     }));
   }
 
-  void _changeBalanceCallBack(List<double> acc) {
+  void _changeBalanceVolumeCallBack(List<double> acc) {
     // normalize acc to [-1, 1]
-    double x = (acc[0] / 9.8) * -1;
+    double x = (acc[0] / 9.8);
+    double y = 1 - (acc[1] / 9.8).abs();
     _balance = _isOn3DAudio ? x : 0.0;
+    _volume = _isOn3DAudio ? y : 1.0;
     notifyListeners();
     _audioPlayer.setBalance(_balance);
+    _audioPlayer.setVolume(_volume);
   }
 
   void unregisterAudioPlayer() {
-    _gyroProvider.removeAccListener(_changeBalanceCallBack);
+    _gyroProvider.removeAccListener(_changeBalanceVolumeCallBack);
     for (var element in _streamSubscriptions) {
       element.cancel();
     }
